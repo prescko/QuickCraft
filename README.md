@@ -18,7 +18,7 @@
 
   <br>
 
-  <img src="https://img.shields.io/github/license/prescko/QuickCraft?style=flat-square](https://github.com/prescko/QuickCraft?tab=License-1-ov-file" alt="License">
+  <img src="https://github.com/prescko/QuickCraft/blob/main/LICENSE" alt="License">
   <img src="https://img.shields.io/github/issues/prescko/QuickCraft?style=flat-square" alt="Issues">
   <img src="https://img.shields.io/github/languages/top/prescko/QuickCraft?style=flat-square" alt="Top Language">
 </p>
