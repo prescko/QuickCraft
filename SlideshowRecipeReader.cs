@@ -1,7 +1,7 @@
 using System.Reflection;
 using Vintagestory.API.Client;
 
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
 internal static class SlideshowRecipeReader
 {

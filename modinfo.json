@@ -1,0 +1,14 @@
+{
+  "type": "code",
+  "modid": "quickcraft",
+  "name": "Quick Craft",
+  "authors": [
+    "prescko"
+  ],
+  "description": "Client-side handbook crafting helper for Vintage Story 1.22.2. Adds inline handbook recipe actions: + fills one craft, * fills the maximum possible batch and crafts it into your inventory, ALL repeats max-batch crafting until materials run out.",
+  "version": "1.0.7",
+  "side": "Client",
+  "dependencies": {
+    "game": "1.22.2"
+  }
+}

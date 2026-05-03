@@ -1,6 +1,6 @@
 using Vintagestory.API.Client;
 
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
 internal static class Extensions
 {

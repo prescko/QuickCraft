@@ -2,11 +2,18 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
 internal static class HandbookSpaceCrafting
 {
     private const int MaxCraftAllCycles = 512;
+    private const int OutputTransferAttempts = 8;
+    private const int CraftAllOutputAttempts = 40;
+    private const int CraftAllRetryDelayMs = 75;
+    private const int CraftAllSettleDelayMs = 250;
+    private const int CraftAllRefillDelayMs = 175;
+    private const int CraftAllInputSettleAttempts = 16;
+    private const int CraftAllInputSettleDelayMs = 75;
 
     private static ICoreClientAPI? api;
     private static bool craftAllRunning;
@@ -51,7 +58,7 @@ internal static class HandbookSpaceCrafting
         CraftFillResult fillResult = RecipeGridFiller.TryFillMax(capi, recipes);
         if (fillResult == CraftFillResult.Success || fillResult == CraftFillResult.AlreadyFull)
         {
-            capi.Event.RegisterCallback(_ => TransferOutputWithRetries(capi, craftingGrid!, 8), 100);
+            capi.Event.RegisterCallback(_ => TransferOutputWithRetries(capi, craftingGrid!, OutputTransferAttempts), 100);
             capi.Gui.PlaySound("menubutton_press", false, 1f);
             return true;
         }
@@ -92,7 +99,7 @@ internal static class HandbookSpaceCrafting
         }
 
         capi.Gui.PlaySound("menubutton_wood", false, 1f);
-        capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickhandbookcraft-nogrid", Lang.Get("quickhandbookcraft:nocraftinggrid"));
+        capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-nogrid", Lang.Get(ModIds.ModId + ":nocraftinggrid"));
         return false;
     }
 
@@ -107,7 +114,7 @@ internal static class HandbookSpaceCrafting
                 return true;
             default:
                 capi.Gui.PlaySound("menubutton_wood", false, 1f);
-                capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickhandbookcraft-missing", Lang.Get("quickhandbookcraft:cannotfill"));
+                capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-missing", Lang.Get(ModIds.ModId + ":cannotfill"));
                 return false;
         }
     }
@@ -162,7 +169,7 @@ internal static class HandbookSpaceCrafting
 
         if (attemptsLeft <= 0)
         {
-            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickhandbookcraft-outputblocked", Lang.Get("quickhandbookcraft:outputblocked"));
+            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-outputblocked", Lang.Get(ModIds.ModId + ":outputblocked"));
             completed(false);
             return;
         }
@@ -175,7 +182,7 @@ internal static class HandbookSpaceCrafting
         if (cycles >= MaxCraftAllCycles)
         {
             craftAllRunning = false;
-            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickhandbookcraft-craftalllimit", Lang.Get("quickhandbookcraft:craftalllimit"));
+            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-craftalllimit", Lang.Get(ModIds.ModId + ":craftalllimit"));
             return;
         }
 
@@ -201,9 +208,11 @@ internal static class HandbookSpaceCrafting
             capi.Gui.PlaySound("menubutton_press", false, 1f);
         }
 
+        string inputSignatureBeforeCraft = GetInputSignature(craftingGrid!);
+
         capi.Event.RegisterCallback(_ =>
         {
-            TransferOutputWithRetries(capi, craftingGrid!, 8, moved =>
+            TransferOutputForCraftAll(capi, craftingGrid!, inputSignatureBeforeCraft, CraftAllOutputAttempts, moved =>
             {
                 if (!moved)
                 {
@@ -211,8 +220,81 @@ internal static class HandbookSpaceCrafting
                     return;
                 }
 
-                capi.Event.RegisterCallback(__ => CraftAllStep(capi, recipes, cycles + 1), 75);
+                capi.Event.RegisterCallback(__ => CraftAllStep(capi, recipes, cycles + 1), CraftAllRefillDelayMs);
             });
         }, 100);
+    }
+
+    private static void TransferOutputForCraftAll(ICoreClientAPI capi, IInventory craftingGrid, string inputSignatureBeforeCraft, int attemptsLeft, Action<bool> completed)
+    {
+        if (TryTransferOutput(capi, craftingGrid))
+        {
+            capi.Event.RegisterCallback(_ => WaitForCraftAllOutputToClear(capi, craftingGrid, inputSignatureBeforeCraft, CraftAllOutputAttempts, completed), CraftAllSettleDelayMs);
+            return;
+        }
+
+        if (attemptsLeft <= 0)
+        {
+            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-outputblocked", Lang.Get(ModIds.ModId + ":outputblocked"));
+            completed(false);
+            return;
+        }
+
+        capi.Event.RegisterCallback(_ => TransferOutputForCraftAll(capi, craftingGrid, inputSignatureBeforeCraft, attemptsLeft - 1, completed), CraftAllRetryDelayMs);
+    }
+
+    private static void WaitForCraftAllOutputToClear(ICoreClientAPI capi, IInventory craftingGrid, string inputSignatureBeforeCraft, int attemptsLeft, Action<bool> completed)
+    {
+        if (IsOutputSlotEmpty(craftingGrid))
+        {
+            WaitForCraftAllInputsToSettle(capi, craftingGrid, inputSignatureBeforeCraft, CraftAllInputSettleAttempts, completed);
+            return;
+        }
+
+        if (attemptsLeft <= 0)
+        {
+            capi.TriggerIngameError(typeof(HandbookSpaceCrafting), "quickcraft-outputblocked", Lang.Get(ModIds.ModId + ":outputblocked"));
+            completed(false);
+            return;
+        }
+
+        if (TryTransferOutput(capi, craftingGrid))
+        {
+            capi.Event.RegisterCallback(_ => WaitForCraftAllOutputToClear(capi, craftingGrid, inputSignatureBeforeCraft, attemptsLeft - 1, completed), CraftAllSettleDelayMs);
+            return;
+        }
+
+        capi.Event.RegisterCallback(_ => WaitForCraftAllOutputToClear(capi, craftingGrid, inputSignatureBeforeCraft, attemptsLeft - 1, completed), CraftAllRetryDelayMs);
+    }
+
+    private static void WaitForCraftAllInputsToSettle(ICoreClientAPI capi, IInventory craftingGrid, string inputSignatureBeforeCraft, int attemptsLeft, Action<bool> completed)
+    {
+        if (GetInputSignature(craftingGrid) != inputSignatureBeforeCraft || attemptsLeft <= 0)
+        {
+            completed(true);
+            return;
+        }
+
+        capi.Event.RegisterCallback(_ => WaitForCraftAllInputsToSettle(capi, craftingGrid, inputSignatureBeforeCraft, attemptsLeft - 1, completed), CraftAllInputSettleDelayMs);
+    }
+
+    private static bool IsOutputSlotEmpty(IInventory craftingGrid)
+    {
+        ItemSlot outputSlot = craftingGrid[9];
+        return outputSlot == null || outputSlot.Empty || outputSlot.StackSize <= 0;
+    }
+
+    private static string GetInputSignature(IInventory craftingGrid)
+    {
+        string[] parts = new string[9];
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            ItemSlot slot = craftingGrid[i];
+            ItemStack? stack = slot?.Itemstack;
+            parts[i] = stack?.Collectible?.Code == null ? "-" : stack.Collectible.Code + ":" + stack.StackSize;
+        }
+
+        return string.Join("|", parts);
     }
 }

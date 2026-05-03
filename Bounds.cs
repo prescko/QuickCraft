@@ -1,4 +1,4 @@
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
 internal struct Bounds
 {

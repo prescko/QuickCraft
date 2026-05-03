@@ -2,9 +2,9 @@ using HarmonyLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
-public sealed class QuickHandbookCraftModSystem : ModSystem
+public sealed class QuickCraftModSystem : ModSystem
 {
     private Harmony? harmony;
 
@@ -30,5 +30,6 @@ public sealed class QuickHandbookCraftModSystem : ModSystem
 
 internal static class ModIds
 {
-    public const string HarmonyId = "quickhandbookcraft.spacecraft";
+    public const string ModId = "quickcraft";
+    public const string HarmonyId = ModId + ".spacecraft";
 }

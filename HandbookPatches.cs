@@ -3,7 +3,7 @@ using HarmonyLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace QuickHandbookCraft;
+namespace QuickCraft;
 
 [HarmonyPatch]
 public static class CreatedByInfoPatch
@@ -52,9 +52,9 @@ public static class CreatedByInfoPatch
 
             RichTextComponentBase[] buttons =
             {
-                RecipeActionLinks.Create(api, "[ + ]", "addone", () => HandbookSpaceCrafting.TryFillRecipes(recipes, max: false)),
-                RecipeActionLinks.Create(api, "[ * ]", "craftmax", () => HandbookSpaceCrafting.TryCraftRecipes(recipes)),
-                RecipeActionLinks.Create(api, "[ ALL ]", "craftall", () => HandbookSpaceCrafting.TryCraftAllRecipes(recipes))
+                RecipeActionLinks.Create(api, "[ + ]", "addone", new double[] { 0.68, 1.0, 0.72, 1.0 }, () => HandbookSpaceCrafting.TryFillRecipes(recipes, max: false)),
+                RecipeActionLinks.Create(api, "[ * ]", "craftmax", new double[] { 1.0, 0.86, 0.42, 1.0 }, () => HandbookSpaceCrafting.TryCraftRecipes(recipes)),
+                RecipeActionLinks.Create(api, "[ ALL ]", "craftall", new double[] { 0.55, 0.9, 1.0, 1.0 }, () => HandbookSpaceCrafting.TryCraftAllRecipes(recipes))
             };
 
             components.InsertRange(i + 1, buttons);
