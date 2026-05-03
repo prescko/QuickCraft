@@ -1,7 +1,7 @@
 # QuickCraft (Vintage Story Mod)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/prescko/QuickCraft/main/icon.png" alt="QuickCraft Logo" width="680" height="320">
+  <img src="https://raw.githubusercontent.com/prescko/QuickCraft/main/QuickCraft-logo.png" alt="QuickCraft-Logo" width="680" height="320">
   <br>
   <b>Mastery in a Moment. Efficient crafting for true survivors.</b>
   <br><br>
