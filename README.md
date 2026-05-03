@@ -5,7 +5,7 @@
   <br>
   <b>Mastery in a Moment. Efficient crafting for true survivors.</b>
   <br><br>
-  <a href="https://ВАШЕ_ПОСИЛАННЯ_НА_ЗАВАНТАЖЕННЯ/latest"><img src="https://img.shields.io/github/v/release/ВАШ_ЛОГІН/ВАШ_РЕПОЗИТОРІЙ?style=for-the-badge&color=green" alt="Latest Release"></a>
+  <a href="https://ВАШЕ_ПОСИЛАННЯ_НА_ЗАВАНТАЖЕННЯ/latest"><img src="[https://img.shields.io/github/v/release/ВАШ_ЛОГІН/ВАШ_РЕПОЗИТОРІЙ](https://github.com/prescko/QuickCraft/releases/tag/ReleaseV1.22.2)?style=for-the-badge&color=green" alt="Latest Release"></a>
   <a href="https://www.vintagestory.at/"><img src="https://img.shields.io/badge/Game-Vintage%20Story-8b4513?style=for-the-badge&logo=coffee" alt="For Vintage Story"></a>
   <img src="https://img.shields.io/badge/Side-Client--Only-blue?style=for-the-badge" alt="Client-Side Only">
   <br>
