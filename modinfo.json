@@ -5,8 +5,8 @@
   "authors": [
     "prescko"
   ],
-  "description": "Client-side handbook crafting helper for Vintage Story 1.22.2. Adds inline handbook recipe actions: + fills one craft, * fills the maximum possible batch and crafts it into your inventory, ALL repeats max-batch crafting until materials run out.",
-  "version": "1.0.7",
+  "description": "Client-side handbook crafting helper for Vintage Story 1.22.2. Adds inline handbook recipe actions: + fills one craft, * fills the maximum possible batch and immediately shift-crafts it into your inventory, ALL repeats max-batch crafting until materials run out. Automatically checks same-output recipe variants, keeps shaped recipe slots aligned correctly, and sends synchronized inventory packets so auto-craft works immediately without closing menus.",
+  "version": "1.0.22",
   "side": "Client",
   "dependencies": {
     "game": "1.22.2"

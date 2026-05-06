@@ -15,6 +15,7 @@ public sealed class QuickCraftModSystem : ModSystem
 
     public override void StartClientSide(ICoreClientAPI api)
     {
+        RecipeVariantCollector.ClearCache();
         HandbookSpaceCrafting.SetApi(api);
         harmony = new Harmony(ModIds.HarmonyId);
         harmony.PatchAll();
@@ -24,6 +25,7 @@ public sealed class QuickCraftModSystem : ModSystem
     {
         harmony?.UnpatchAll(ModIds.HarmonyId);
         harmony = null;
+        RecipeVariantCollector.ClearCache();
         HandbookSpaceCrafting.SetApi(null);
     }
 }

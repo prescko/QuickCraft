@@ -4,6 +4,7 @@ using Vintagestory.API.Util;
 
 namespace QuickCraft;
 
+#pragma warning disable CS0618
 internal enum CraftFillResult
 {
     Success,
@@ -66,30 +67,37 @@ internal static class RecipeGridFiller
             .DistinctBy(code => code.Key)
             .ToDictionary(code => code.Key, code => available.Sum(item => code.Matches(item.Key) ? item.Value : 0));
 
-        GridRecipe? recipe = recipes.FirstOrDefault(candidate => SafeMatches(candidate, player, api.World, input));
-        recipe ??= recipes
-            .Where(candidate => CanMake(candidate, input, stacks, available, wildcards))
-            .OrderByDescending(candidate => ScoreRecipe(candidate, available))
-            .FirstOrDefault();
+        GridRecipe[] candidates = recipes
+            .Where(candidate => SafeMatches(candidate, player, api.World, input) || CanMake(candidate, input, stacks, available, wildcards))
+            .OrderByDescending(candidate => SafeMatches(candidate, player, api.World, input) ? int.MaxValue : ScoreRecipe(candidate, available))
+            .ToArray();
 
-        if (recipe == null)
+        if (candidates.Length == 0)
         {
             return CraftFillResult.MissingItems;
         }
 
-        bool changed = false;
-        bool lastChanged;
-
-        do
+        foreach (GridRecipe recipe in candidates)
         {
-            lastChanged = AddIngredients(api, input, recipe, stacks);
-            changed |= lastChanged;
-        }
-        while (max && lastChanged);
+            bool changed = false;
+            bool lastChanged;
 
-        if (changed)
-        {
-            return CraftFillResult.Success;
+            do
+            {
+                lastChanged = AddIngredients(api, input, recipe, stacks);
+                changed |= lastChanged;
+            }
+            while (max && lastChanged);
+
+            if (changed)
+            {
+                return CraftFillResult.Success;
+            }
+
+            if (SafeMatches(recipe, player, api.World, input))
+            {
+                return CraftFillResult.AlreadyFull;
+            }
         }
 
         return recipes.Any(candidate => SafeMatches(candidate, player, api.World, input))
@@ -127,7 +135,7 @@ internal static class RecipeGridFiller
 
         bool possible = ingredients
             .GroupBy(ingredient => new IngredientCode(ingredient))
-            .All(group => (group.Key.Wild ? wildcards.GetValueOrDefault(group.Key.Key) : available.GetValueOrDefault(group.Key.Code)) >= group.Sum(ingredient => ingredient.Quantity));
+            .All(group => (group.Key.Wild ? wildcards.GetValueOrDefault(group.Key.Key) : available.GetValueOrDefault(group.Key.Code!)) >= group.Sum(ingredient => ingredient.Quantity));
 
         if (!possible || !ingredients.Any(ingredient => ingredient.IsWildCard || ingredient.IsTool))
         {
@@ -171,11 +179,11 @@ internal static class RecipeGridFiller
     {
         int score = 0;
 
-        foreach (CraftingRecipeIngredient ingredient in GetResolvedIngredients(recipe).Where(ingredient => ingredient != null && ingredient.Code != null))
+        foreach (CraftingRecipeIngredient ingredient in GetResolvedIngredients(recipe).Where(ingredient => ingredient.Code != null))
         {
             if (!ingredient.IsWildCard)
             {
-                score += available.GetValueOrDefault(ingredient.Code);
+                score += available.GetValueOrDefault(ingredient.Code!);
                 continue;
             }
 
@@ -196,7 +204,7 @@ internal static class RecipeGridFiller
     {
         List<(ItemSlot From, ItemSlot To, int Quantity)> operations = new();
         Dictionary<ItemSlot, int> remaining = new();
-        CraftingRecipeIngredient[] ingredients = GetResolvedIngredients(recipe);
+        CraftingRecipeIngredient?[] ingredients = GetSlotIngredients(recipe);
         if (ingredients.Length == 0)
         {
             return false;
@@ -205,7 +213,8 @@ internal static class RecipeGridFiller
         if (recipe.Shapeless)
         {
             input = input.ToArray();
-            ItemSlot?[] newInput = ingredients.Select(ingredient => PullFirst(input, slot => Satisfies(ingredient, slot?.Itemstack))).ToArray();
+            CraftingRecipeIngredient?[] shapelessIngredients = ingredients.Where(ingredient => ingredient != null).ToArray();
+            ItemSlot?[] newInput = shapelessIngredients.Select(ingredient => PullFirst(input, slot => Satisfies(ingredient, slot?.Itemstack))).ToArray();
 
             foreach (ItemSlot slot in input.Where(slot => slot != null && !slot.Empty))
             {
@@ -218,6 +227,7 @@ internal static class RecipeGridFiller
             }
 
             input = newInput!;
+            ingredients = shapelessIngredients;
         }
         else if (recipe.Width * recipe.Height < 9)
         {
@@ -309,7 +319,7 @@ internal static class RecipeGridFiller
 
                 if (!remaining.TryGetValue(slot, out int sizeLeft))
                 {
-                    sizeLeft = slot.Itemstack.StackSize;
+                    sizeLeft = slot.Itemstack!.StackSize;
                     remaining[slot] = sizeLeft;
                 }
 
@@ -451,19 +461,22 @@ internal static class RecipeGridFiller
     {
         return recipe?.ResolvedIngredients?
             .Where(ingredient => ingredient != null)
+            .Cast<CraftingRecipeIngredient>()
             .ToArray() ?? Array.Empty<CraftingRecipeIngredient>();
     }
 
-    private static CraftingRecipeIngredient? GetIngredient(CraftingRecipeIngredient[] ingredients, int index)
+    private static CraftingRecipeIngredient?[] GetSlotIngredients(GridRecipe? recipe)
+    {
+        return recipe?.ResolvedIngredients?.ToArray() ?? Array.Empty<CraftingRecipeIngredient?>();
+    }
+
+    private static CraftingRecipeIngredient? GetIngredient(CraftingRecipeIngredient?[] ingredients, int index)
     {
         return index >= 0 && index < ingredients.Length ? ingredients[index] : null;
     }
 
     private static void SendPacket(ICoreClientAPI api, object? packet)
     {
-        if (packet != null)
-        {
-            api.Network.SendPacketClient(packet);
-        }
+        InventoryPacketPatcher.Send(api, packet);
     }
 }

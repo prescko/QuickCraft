@@ -5,25 +5,18 @@ namespace QuickCraft;
 
 internal static class RecipeActionLinks
 {
-    public static LinkTextComponent Create(ICoreClientAPI api, string label, string langCode, double[] color, Action action)
+    public static RichTextComponentBase Create(ICoreClientAPI api, string label, string langCode, double[] color, Action action)
     {
-        CairoFont font = CairoFont.WhiteMediumText().WithColor(color);
-        ((FontConfig)font).UnscaledFontsize = GuiElement.scaled(18.0);
-
-        LinkTextComponent link = new(api, " " + label + " ", font, _ => RunSafely(api, action))
-        {
-            Clickable = true,
-            PaddingLeft = 10,
-            PaddingRight = 10,
-            VerticalAlign = (EnumVerticalAlign)3
-        };
-
-        link.SetHref(ModIds.ModId + ":" + langCode);
-        return link;
+        return new RecipeActionButtonComponent(api, label, langCode, color, () => RunSafely(api, action));
     }
 
     private static void RunSafely(ICoreClientAPI api, Action action)
     {
+        if (!HandbookSpaceCrafting.CanUseCraftingActions(api))
+        {
+            return;
+        }
+
         try
         {
             action();

@@ -4,6 +4,7 @@ using Vintagestory.API.Util;
 
 namespace QuickCraft;
 
+#pragma warning disable CS0618
 internal readonly struct IngredientCode
 {
     private readonly string[]? include;
@@ -20,7 +21,7 @@ internal readonly struct IngredientCode
         include = null;
         exclude = null;
         key = null;
-        Code = ingredient.Code;
+        Code = ingredient.Code!;
         Wild = ingredient.IsWildCard;
 
         if (Wild)

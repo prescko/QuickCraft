@@ -22,7 +22,7 @@ internal struct Bounds
         int x = outer % outerLen - inner % xLen;
         int y = outer / outerLen - inner / xLen;
 
-        if (x >= 0 && y >= 0 && x + xLen < outerLen && y + yLen < outerLen)
+        if (x >= 0 && y >= 0 && x + xLen <= outerLen && y + yLen <= outerLen)
         {
             xPos = x;
             yPos = y;

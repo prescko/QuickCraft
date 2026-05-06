@@ -40,10 +40,7 @@ public static class CreatedByInfoPatch
                 continue;
             }
 
-            GridRecipe[] recipes = group
-                .Select(entry => entry.Recipe)
-                .Where(recipe => recipe != null)
-                .ToArray();
+            GridRecipe[] recipes = RecipeVariantCollector.IncludeSameOutputVariants(api, group.Select(entry => entry.Recipe));
 
             if (recipes.Length == 0)
             {

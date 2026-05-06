@@ -17,5 +17,9 @@
       <HintPath>D:\Vintagestory\Lib\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="cairo-sharp">
+      <HintPath>D:\Vintagestory\Lib\cairo-sharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 </Project>
